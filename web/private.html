@@ -96,13 +96,22 @@
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
         var results = regex.exec(location.search);
-        return results === null
-          ? `https://${username}:${password}@dev.mp.knawat.io/openapi/openapi-private.json`
-          : decodeURIComponent(results[1].replace(/\+/g, " ")).replace('https://', `https://${username}:${password}@`);
+        const url = results === null
+          ? 'https://dev.mp.knawat.io/openapi/openapi-private.json'
+          : results[1];
+        return { url, username, password };
       }
-      Redoc.init(getUrlParameter("url"), {
-        theme: { colors: { primary: { main: "#ef6530" } } },
-      });
+      async function fetchOpenapi() {
+        const { url, username, password } = getUrlParameter("url");
+        const req = await fetch(url, { headers: {
+          'Authorization': 'Basic ' + btoa(username + ':' + password)
+        }});
+        const definition = await req.json();
+        Redoc.init(definition, {
+          theme: { colors: { primary: { main: "#ef6530" } } },
+        });
+      }
+      fetchOpenapi();
     </script>
   </body>
 </html>
